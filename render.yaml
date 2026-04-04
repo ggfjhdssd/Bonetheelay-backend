@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: diamond-hunter-backend
+    name: bonetheelay-backend
     env: node
     region: singapore
     plan: free
