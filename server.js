@@ -113,7 +113,7 @@ withdrawalSchema.index({ status: 1 });
 withdrawalSchema.index({ userId: 1 });
 withdrawalSchema.index({ expireAt: 1 }, { expireAfterSeconds: 0 });
 
-// Diamond Hunter Game Schema
+// Cash Hunter Game Schema
 const minesGameSchema = new mongoose.Schema({
   gameId:           { type: String, required: true, unique: true },
   userId:           { type: Number, required: true },
@@ -205,7 +205,7 @@ async function setSetting(key, value) {
   await Settings.findOneAndUpdate({key},{value},{upsert:true});
 }
 
-// ===== Diamond Hunter Core Logic =====
+// ===== Cash Hunter Core Logic =====
 const TOTAL_TILES = 25;
 
 function generateBombPositions(serverSeed, clientSeed, bombCount) {
@@ -355,7 +355,7 @@ if (BOT_TOKEN) {
       const isMember = await isChannelMember(id);
       if (!isMember) {
         await ctx.reply(
-          `👋 မင်္ဂလာပါ ${ctx.from.first_name}!\n\n💎 <b>Diamond Hunter</b> ကစားရန် Channel ကို Join ဖြစ်ရပါမည်!`,
+          `👋 မင်္ဂလာပါ ${ctx.from.first_name}!\n\n💵 <b>Cash Hunter</b> ကစားရန် Channel ကို Join ဖြစ်ရပါမည်!`,
           { parse_mode: 'HTML', ...Markup.inlineKeyboard([
             [Markup.button.url('📢 Channel Join ရန်', CHANNEL_LINK)],
             [Markup.button.callback('✅ Join ပြီးပြီ', 'check_join')]
@@ -364,9 +364,9 @@ if (BOT_TOKEN) {
         return;
       }
       await ctx.reply(
-        `💎 မင်္ဂလာပါ <b>${ctx.from.first_name}</b>!\n\n💰 လက်ကျန်: <b>${user.balance.toLocaleString()} MMK</b>\n🎮 ကစားမှု: ${user.totalGames}  •  🏆 အနိုင်: ${user.wins}`,
+        `💵 မင်္ဂလာပါ <b>${ctx.from.first_name}</b>!\n\n💰 လက်ကျန်: <b>${user.balance.toLocaleString()} MMK</b>\n🎮 ကစားမှု: ${user.totalGames}  •  🏆 အနိုင်: ${user.wins}`,
         { parse_mode: 'HTML', ...Markup.inlineKeyboard([
-          [Markup.button.webApp('💎 Hunt Now', FRONTEND_URL)],
+          [Markup.button.webApp('💵 Play Now', FRONTEND_URL)],
           [Markup.button.callback('💰 Balance','bal'), Markup.button.callback('🔗 Referral','ref')]
         ])}
       ).catch(() => {});
@@ -387,8 +387,8 @@ if (BOT_TOKEN) {
       }
       const user = await User.findOne({ telegramId: id }).lean();
       await ctx.reply(
-        `✅ Join အောင်မြင်!\n💎 Diamond Hunter မင်္ဂလာပါ!\n💰 လက်ကျန်: ${(user?.balance||0).toLocaleString()} MMK`,
-        Markup.inlineKeyboard([[Markup.button.webApp('💎 Hunt Now', FRONTEND_URL)]])
+        `✅ Join အောင်မြင်!\n💵 Cash Hunter မင်္ဂလာပါ!\n💰 လက်ကျန်: ${(user?.balance||0).toLocaleString()} MMK`,
+        Markup.inlineKeyboard([[Markup.button.webApp('💵 Play Now', FRONTEND_URL)]])
       ).catch(() => {});
     } catch(e) {}
   });
@@ -400,7 +400,7 @@ if (BOT_TOKEN) {
       if (!u) return;
       await ctx.reply(
         `💰 လက်ကျန်: <b>${u.balance.toLocaleString()} MMK</b>\n🎮 ကစားမှု: ${u.totalGames} • 🏆 ${u.wins} နိုင် • ❌ ${u.losses} ရှုံး`,
-        { parse_mode: 'HTML', ...Markup.inlineKeyboard([[Markup.button.webApp('💎 Hunt Now', FRONTEND_URL)]])}
+        { parse_mode: 'HTML', ...Markup.inlineKeyboard([[Markup.button.webApp('💵 Play Now', FRONTEND_URL)]])}
       ).catch(() => {});
     } catch(e) {}
   });
@@ -413,7 +413,7 @@ if (BOT_TOKEN) {
       const link = `https://t.me/${BOT_USERNAME}?start=${u.referralCode}`;
       await ctx.reply(
         `🔗 <b>Referral Link</b>\n\n<code>${link}</code>`,
-        { parse_mode: 'HTML', ...Markup.inlineKeyboard([[Markup.button.url('📤 Share', `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent('💎 Diamond Hunter — ပိုက်ဆံ ရှာကြစို့! Join ပါ 👇')}`)]])}
+        { parse_mode: 'HTML', ...Markup.inlineKeyboard([[Markup.button.url('📤 Share', `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent('💵 Cash Hunter — ပိုက်ဆံ ရှာကြစို့! Join ပါ 👇')}`)]])}
       ).catch(() => {});
     } catch(e) {}
   });
@@ -457,7 +457,7 @@ async function isAgent(req, res, next) {
 }
 
 // ===== Status Routes =====
-app.get('/', (_, res) => res.json({ ok: true, game: 'diamond-hunter' }));
+app.get('/', (_, res) => res.json({ ok: true, game: 'cash-hunter' }));
 app.get('/health', (_, res) => res.json({ ok: true, mongodb: isConnected ? 'connected' : 'disconnected' }));
 
 // ===== Auth =====
@@ -509,7 +509,7 @@ app.get('/api/user/:id', async (req, res) => {
   } catch(e) { res.status(500).json({ error: 'Server error' }); }
 });
 
-// ===== Diamond Hunter API =====
+// ===== Cash Hunter API =====
 
 app.post('/api/mines/start', async (req, res) => {
   try {
@@ -620,7 +620,7 @@ app.post('/api/mines/reveal', async (req, res) => {
       );
 
       return res.json({
-        result: 'diamond', cell,
+        result: 'cash', cell,
         currentMultiplier: game.currentMultiplier,
         revealedCells: game.revealedCells,
         winAmount, status: 'cashout',
@@ -633,7 +633,7 @@ app.post('/api/mines/reveal', async (req, res) => {
 
     await game.save();
     res.json({
-      result: 'diamond', cell,
+      result: 'cash', cell,
       currentMultiplier: game.currentMultiplier,
       nextMultiplier: calcMultiplier(game.bombCount, revealed + 1),
       revealedCells: game.revealedCells,
@@ -906,7 +906,7 @@ app.post('/api/admin/deposits/:id/confirm', isAdmin, async (req, res) => {
         const bonus = isAgentReferrer ? 200 : 100;
         await User.findOneAndUpdate({ telegramId: depositor.referredBy }, { $inc: { balance: bonus } });
         if (bot) bot.telegram.sendMessage(depositor.referredBy,
-          `🎉 သင့် Referral မှ ပထမဆုံး Add Gold ကြောင့် <b>+${bonus} MMK</b> ရရှိပါပြီ! 💎`,
+          `🎉 သင့် Referral မှ ပထမဆုံး Add Gold ကြောင့် <b>+${bonus} MMK</b> ရရှိပါပြီ! 💵`,
           { parse_mode: 'HTML' }).catch(() => {});
       }
     }
@@ -914,8 +914,8 @@ app.post('/api/admin/deposits/:id/confirm', isAdmin, async (req, res) => {
     creditAgentCommission(dep.userId, dep.amount, 'deposit').catch(() => {});
 
     if (bot) bot.telegram.sendMessage(dep.userId,
-      `✅ ငွေ ${dep.amount.toLocaleString()} ကျပ် Add Gold အတည်ပြုပြီး! 💎`,
-      Markup.inlineKeyboard([[Markup.button.webApp('💎 Hunt Now', FRONTEND_URL)]])).catch(() => {});
+      `✅ ငွေ ${dep.amount.toLocaleString()} ကျပ် Add Gold အတည်ပြုပြီး! 💵`,
+      Markup.inlineKeyboard([[Markup.button.webApp('💵 Play Now', FRONTEND_URL)]])).catch(() => {});
     res.json({ success: true });
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
@@ -1197,8 +1197,8 @@ app.post('/api/agent/deposits/:id/confirm', isAgent, async (req, res) => {
     }
 
     if (bot) bot.telegram.sendMessage(dep.userId,
-      `✅ ငွေ ${dep.amount.toLocaleString()} ကျပ် Add Gold အတည်ပြုပြီး! 💎`,
-      Markup.inlineKeyboard([[Markup.button.webApp('💎 Hunt Now', FRONTEND_URL)]])).catch(() => {});
+      `✅ ငွေ ${dep.amount.toLocaleString()} ကျပ် Add Gold အတည်ပြုပြီး! 💵`,
+      Markup.inlineKeyboard([[Markup.button.webApp('💵 Play Now', FRONTEND_URL)]])).catch(() => {});
     res.json({ success: true });
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
@@ -1413,4 +1413,4 @@ process.on('unhandledRejection', r => console.error('Rejection:', r));
 process.on('uncaughtException',  e => console.error('Exception:', e));
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`🚀 Diamond Hunter server on port ${PORT}`));
+server.listen(PORT, () => console.log(`🚀 Cash Hunter server on port ${PORT}`));
