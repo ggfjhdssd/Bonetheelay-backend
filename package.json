@@ -1,7 +1,7 @@
 {
-  "name": "diamond-hunter-backend",
+  "name": "cash-hunter-backend",
   "version": "2.0.0",
-  "description": "Diamond Hunter Game — Backend Server",
+  "description": "Cash Hunter Game — Backend Server",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

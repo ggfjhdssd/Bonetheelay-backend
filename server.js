@@ -208,6 +208,29 @@ async function setSetting(key, value) {
 // ===== Cash Hunter Core Logic =====
 const TOTAL_TILES = 25;
 
+// ═══════════════════════════════════════════════════════════════════
+// DYNAMIC HOUSE EDGE SYSTEM (Bet-Based Variable Difficulty)
+//
+//  betAmount < 2,000        → houseEdge 8%   (player win chance ~92%)
+//  betAmount 2,000–4,999    → houseEdge 15%  (player win chance ~85%)
+//  betAmount 5,000–9,999    → houseEdge 30%  (player win chance ~70%)
+//  betAmount 10,000–24,999  → houseEdge 50%  (player win chance ~50%)
+//  betAmount 25,000–49,999  → houseEdge 65%  (player win chance ~35%)
+//  betAmount >= 50,000      → houseEdge 80%  (player win chance ~20%)
+//
+//  "houseEdge" = probability that each reveal call triggers a
+//  hidden bomb (on top of preset bomb positions).
+//  This runs server-side only — client never sees it.
+// ═══════════════════════════════════════════════════════════════════
+function getDynamicHouseEdge(betAmount) {
+  if (betAmount <  2000)  return 0.08;   // low bet  → easy
+  if (betAmount <  5000)  return 0.15;
+  if (betAmount < 10000)  return 0.30;
+  if (betAmount < 25000)  return 0.50;
+  if (betAmount < 50000)  return 0.65;
+  return 0.80;                           // high bet → hard
+}
+
 function generateBombPositions(serverSeed, clientSeed, bombCount) {
   const combined = `${clientSeed}`;
   const hmac = crypto.createHmac('sha256', serverSeed).update(combined).digest('hex');
@@ -227,7 +250,7 @@ function calcMultiplier(bombCount, revealed) {
   for (let i = 0; i < revealed; i++) {
     mult *= (TOTAL_TILES - i) / (TOTAL_TILES - bombCount - i);
   }
-  mult *= 0.94; // 6% house edge
+  mult *= 0.94; // base 6% house edge reflected in payout
   return Math.max(1.01, Math.round(mult * 100) / 100);
 }
 
@@ -629,10 +652,11 @@ app.post('/api/mines/reveal', async (req, res) => {
     if (!game) return res.status(404).json({ error: 'Active game မတွေ့ပါ' });
     if (game.revealedCells.includes(cell)) return res.status(400).json({ error: 'Cell already opened' });
 
-    const HOUSE_EDGE_PCT = 0.06; // 6% dynamic house edge
-    const dynamicBomb = Math.random() < HOUSE_EDGE_PCT;
-    const presetBomb = game.bombPositions.includes(cell);
-    const isBomb = dynamicBomb || presetBomb;
+    // Dynamic house edge: scales with bet size (server-side only)
+    const houseEdge = getDynamicHouseEdge(game.betAmount);
+    const dynamicBomb = Math.random() < houseEdge;
+    const presetBomb  = game.bombPositions.includes(cell);
+    const isBomb      = dynamicBomb || presetBomb;
 
     if (isBomb) {
       if (!game.bombPositions.includes(cell)) {
