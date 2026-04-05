@@ -432,6 +432,40 @@ if (BOT_TOKEN) {
     } catch(e) {}
   });
 
+  // /changekbzphonenumberandname <number> <name>
+  bot.command('changekbzphonenumberandname', async (ctx) => {
+    if (!ADMIN_ID || ctx.from.id !== ADMIN_ID) { await ctx.reply('🚫 Admin မဟုတ်ပါ').catch(() => {}); return; }
+    const parts = ctx.message.text.split(' ').slice(1);
+    if (parts.length < 2) {
+      await ctx.reply('📱 Usage:\n/changekbzphonenumberandname <ဖုန်းနံပါတ်> <အမည်>\n\nဥပမာ:\n/changekbzphonenumberandname 09123456789 ကိုမောင်').catch(() => {});
+      return;
+    }
+    const newNumber = parts[0].trim();
+    const newName = parts.slice(1).join(' ').trim();
+    try {
+      await Settings.findOneAndUpdate({ key: 'admin_kpay_number' }, { key: 'admin_kpay_number', value: newNumber }, { upsert: true });
+      await Settings.findOneAndUpdate({ key: 'admin_kpay_name'   }, { key: 'admin_kpay_name',   value: newName   }, { upsert: true });
+      await ctx.reply(`✅ KBZ Pay အချက်အလက် ပြောင်းလဲပြီ!\n📱 နံပါတ်: ${newNumber}\n👤 အမည်: ${newName}`).catch(() => {});
+    } catch(e) { await ctx.reply('❌ Error: ' + e.message).catch(() => {}); }
+  });
+
+  // /changewavephonenumberandname <number> <name>
+  bot.command('changewavephonenumberandname', async (ctx) => {
+    if (!ADMIN_ID || ctx.from.id !== ADMIN_ID) { await ctx.reply('🚫 Admin မဟုတ်ပါ').catch(() => {}); return; }
+    const parts = ctx.message.text.split(' ').slice(1);
+    if (parts.length < 2) {
+      await ctx.reply('🌊 Usage:\n/changewavephonenumberandname <ဖုန်းနံပါတ်> <အမည်>\n\nဥပမာ:\n/changewavephonenumberandname 09987654321 မမချစ်').catch(() => {});
+      return;
+    }
+    const newNumber = parts[0].trim();
+    const newName = parts.slice(1).join(' ').trim();
+    try {
+      await Settings.findOneAndUpdate({ key: 'admin_wave_number' }, { key: 'admin_wave_number', value: newNumber }, { upsert: true });
+      await Settings.findOneAndUpdate({ key: 'admin_wave_name'   }, { key: 'admin_wave_name',   value: newName   }, { upsert: true });
+      await ctx.reply(`✅ Wave Pay အချက်အလက် ပြောင်းလဲပြီ!\n🌊 နံပါတ်: ${newNumber}\n👤 အမည်: ${newName}`).catch(() => {});
+    } catch(e) { await ctx.reply('❌ Error: ' + e.message).catch(() => {}); }
+  });
+
   bot.catch((err, ctx) => {
     if (err.response?.error_code === 403) return;
     console.error('Bot error:', err.message);
@@ -735,7 +769,7 @@ app.post('/api/deposit', async (req, res) => {
     const { telegramId, kpayName, transactionId, amount, paymentMethod } = req.body;
     if (!telegramId || !kpayName || !transactionId || !amount)
       return res.status(400).json({ error: 'ကွင်းလပ်များ ဖြည့်ပေးပါ' });
-    if (parseInt(amount) < 2500) return res.status(400).json({ error: 'အနည်းဆုံး 2,500 MMK ဖြည့်ပါ' });
+    if (parseInt(amount) < 3000) return res.status(400).json({ error: 'အနည်းဆုံး 3,000 MMK ဖြည့်ပါ' });
     const u = await User.findOne({ telegramId: parseInt(telegramId) }).lean();
     if (!u)          return res.status(404).json({ error: 'User not found' });
     if (u.isBanned)  return res.status(403).json({ error: 'ကောင်ပိတ်ဆို့ထားသည်' });
@@ -898,7 +932,7 @@ app.post('/api/admin/deposits/:id/confirm', isAdmin, async (req, res) => {
     await User.findOneAndUpdate({ telegramId: dep.userId }, { $inc: { balance: dep.amount } });
 
     const depositor = await User.findOne({ telegramId: dep.userId }).lean();
-    if (depositor?.referredBy && dep.amount >= 2500) {
+    if (depositor?.referredBy && dep.amount >= 3000) {
       const prevConfirmed = await Deposit.countDocuments({ userId: dep.userId, status: 'confirmed', _id: { $ne: dep._id } });
       if (prevConfirmed === 0) {
         const referrer = await User.findOne({ telegramId: depositor.referredBy }).lean();
@@ -1174,9 +1208,8 @@ app.post('/api/agent/deposits/:id/confirm', isAgent, async (req, res) => {
     await User.findOneAndUpdate({ telegramId: agentId }, { $inc: { balance: -dep.amount } });
     await User.findOneAndUpdate({ telegramId: dep.userId }, { $inc: { balance: dep.amount } });
 
-    if (dep.amount >= 2500) {
+    if (dep.amount >= 3000) {
       const prevConfirmed = await Deposit.countDocuments({ userId: dep.userId, status: 'confirmed', _id: { $ne: dep._id } });
-      if (prevConfirmed === 0) {
         await User.findOneAndUpdate({ telegramId: agentId }, { $inc: { balance: 200 } });
         if (bot) bot.telegram.sendMessage(agentId,
           `🎉 Referral မှ ပထမဆုံး ငွေဖြည့်သောကြောင့် <b>+200 MMK</b> Bonus ရရှိပါပြီ!`,
@@ -1232,12 +1265,17 @@ app.get('/api/payment-info/:telegramId', async (req, res) => {
     const tid  = parseInt(req.params.telegramId);
     const user = await User.findOne({ telegramId: tid }).lean();
     if (!user) return res.status(404).json({ error: 'User မတွေ့ပါ' });
+    // Read from Settings DB (updated by bot commands), fallback to env
+    const kpayNumSetting  = await Settings.findOne({ key: 'admin_kpay_number' }).lean();
+    const kpayNameSetting = await Settings.findOne({ key: 'admin_kpay_name'   }).lean();
+    const waveNumSetting  = await Settings.findOne({ key: 'admin_wave_number' }).lean();
+    const waveNameSetting = await Settings.findOne({ key: 'admin_wave_name'   }).lean();
     const defaultInfo = {
-      kpayNumber: process.env.ADMIN_KPAY_NUMBER || '09792310926',
-      kpayName:   process.env.ADMIN_KPAY_NAME   || 'Admin',
+      kpayNumber: kpayNumSetting?.value  || process.env.ADMIN_KPAY_NUMBER || '09792310926',
+      kpayName:   kpayNameSetting?.value || process.env.ADMIN_KPAY_NAME   || 'Admin',
       hasWave:    true,
-      waveNumber: process.env.ADMIN_WAVE_NUMBER  || '09792310926',
-      waveName:   process.env.ADMIN_WAVE_NAME    || 'Admin',
+      waveNumber: waveNumSetting?.value  || process.env.ADMIN_WAVE_NUMBER  || '09792310926',
+      waveName:   waveNameSetting?.value || process.env.ADMIN_WAVE_NAME    || 'Admin',
       isAgentPayment: false
     };
     if (!user.referredBy) return res.json(defaultInfo);
