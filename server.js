@@ -355,7 +355,10 @@ if (BOT_TOKEN) {
       const isMember = await isChannelMember(id);
       if (!isMember) {
         await ctx.reply(
-          `👋 မင်္ဂလာပါ ${ctx.from.first_name}!\n\n💵 <b>Cash Hunter</b> ကစားရန် Channel ကို Join ဖြစ်ရပါမည်!`,
+          `💥 မင်္ဂလာပါ <b>${ctx.from.first_name}</b>!
+
+🎯 Cash Hunter ထဲ ဝင်ဖို့ Channel Join ဦးပါ!
+ဗုံး💣 ရှောင်ပြီး ပိုက်ဆံ💵 ရှာမယ် — အခုပဲ! 🔥`,
           { parse_mode: 'HTML', ...Markup.inlineKeyboard([
             [Markup.button.url('📢 Channel Join ရန်', CHANNEL_LINK)],
             [Markup.button.callback('✅ Join ပြီးပြီ', 'check_join')]
@@ -364,10 +367,18 @@ if (BOT_TOKEN) {
         return;
       }
       await ctx.reply(
-        `💵 မင်္ဂလာပါ <b>${ctx.from.first_name}</b>!\n\n💰 လက်ကျန်: <b>${user.balance.toLocaleString()} MMK</b>\n🎮 ကစားမှု: ${user.totalGames}  •  🏆 အနိုင်: ${user.wins}`,
+        `💥 မင်္ဂလာပါ <b>${ctx.from.first_name}</b>!
+
+💵 လက်ကျန်ငွေ — <b>${user.balance.toLocaleString()} MMK</b>
+
+🎯 ဗုံး💣 တွေကို ရှောင်ပြီး ငွေ💵 တွေကို ရှာပါ!
+တစ်ခု ဖွင့်တိုင်း Multiplier တက်တယ်...
+ဘယ်အထိ ရဲမလဲ? 😏
+
+⚡️ အခုပဲ ဝင်ကစားလိုက်!`,
         { parse_mode: 'HTML', ...Markup.inlineKeyboard([
-          [Markup.button.webApp('💵 Play Now', FRONTEND_URL)],
-          [Markup.button.callback('💰 Balance','bal'), Markup.button.callback('🔗 Referral','ref')]
+          [Markup.button.webApp('💵 ကစားမည် — Cash Hunter', FRONTEND_URL)],
+          [Markup.button.callback('💰 လက်ကျန်ငွေ','bal'), Markup.button.callback('🔗 သူငယ်ချင်းဖိတ်','ref')]
         ])}
       ).catch(() => {});
     } catch(e) { console.error('/start err:', e.message); }
@@ -387,8 +398,13 @@ if (BOT_TOKEN) {
       }
       const user = await User.findOne({ telegramId: id }).lean();
       await ctx.reply(
-        `✅ Join အောင်မြင်!\n💵 Cash Hunter မင်္ဂလာပါ!\n💰 လက်ကျန်: ${(user?.balance||0).toLocaleString()} MMK`,
-        Markup.inlineKeyboard([[Markup.button.webApp('💵 Play Now', FRONTEND_URL)]])
+        `✅ အောင်မြင်ပြီ!
+
+💥 ငွေ💵 ရှာမယ်... ဗုံး💣 ရှောင်မယ်!
+💵 လက်ကျန်ငွေ — <b>${(user?.balance||0).toLocaleString()} MMK</b>
+
+⚡️ အခုပဲ ဝင်ကစားလိုက်!`,
+        Markup.inlineKeyboard([[Markup.button.webApp('💵 ကစားမည် — Cash Hunter', FRONTEND_URL)]])
       ).catch(() => {});
     } catch(e) {}
   });
@@ -399,8 +415,12 @@ if (BOT_TOKEN) {
       const u = await User.findOne({ telegramId: ctx.from.id }).lean();
       if (!u) return;
       await ctx.reply(
-        `💰 လက်ကျန်: <b>${u.balance.toLocaleString()} MMK</b>\n🎮 ကစားမှု: ${u.totalGames} • 🏆 ${u.wins} နိုင် • ❌ ${u.losses} ရှုံး`,
-        { parse_mode: 'HTML', ...Markup.inlineKeyboard([[Markup.button.webApp('💵 Play Now', FRONTEND_URL)]])}
+        `💥 <b>${u.firstName||u.username||'Player'}</b>!
+
+💵 လက်ကျန်ငွေ — <b>${u.balance.toLocaleString()} MMK</b>
+
+ဗုံး💣 တွေ ရှောင်ပြီး ပိုက်ဆံ ထပ်ရှာမလား? 😏`,
+        { parse_mode: 'HTML', ...Markup.inlineKeyboard([[Markup.button.webApp('💵 ကစားမည် — Cash Hunter', FRONTEND_URL)]])}
       ).catch(() => {});
     } catch(e) {}
   });
@@ -413,7 +433,7 @@ if (BOT_TOKEN) {
       const link = `https://t.me/${BOT_USERNAME}?start=${u.referralCode}`;
       await ctx.reply(
         `🔗 <b>Referral Link</b>\n\n<code>${link}</code>`,
-        { parse_mode: 'HTML', ...Markup.inlineKeyboard([[Markup.button.url('📤 Share', `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent('💵 Cash Hunter — ပိုက်ဆံ ရှာကြစို့! Join ပါ 👇')}`)]])}
+        { parse_mode: 'HTML', ...Markup.inlineKeyboard([[Markup.button.url('📤 Share', `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent('💣 ဗုံးတွေ ရှောင်ပြီး ပိုက်ဆံ ရှာကြမယ်! 💵\n\nဂိမ်းတစ်ပွဲ ကစားရုံနဲ့ ငွေ Multiplier တက်သွားတယ်... ရဲရင် ဝင်ကစားပါ! 🔥\n\n👇 ဒီ Link ကနေ ဝင်ပါ')}`)]])}
       ).catch(() => {});
     } catch(e) {}
   });
@@ -949,7 +969,7 @@ app.post('/api/admin/deposits/:id/confirm', isAdmin, async (req, res) => {
 
     if (bot) bot.telegram.sendMessage(dep.userId,
       `✅ ငွေ ${dep.amount.toLocaleString()} ကျပ် Add Gold အတည်ပြုပြီး! 💵`,
-      Markup.inlineKeyboard([[Markup.button.webApp('💵 Play Now', FRONTEND_URL)]])).catch(() => {});
+      Markup.inlineKeyboard([[Markup.button.webApp('💵 ကစားမည် — Cash Hunter', FRONTEND_URL)]])).catch(() => {});
     res.json({ success: true });
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
@@ -1232,7 +1252,7 @@ app.post('/api/agent/deposits/:id/confirm', isAgent, async (req, res) => {
 
     if (bot) bot.telegram.sendMessage(dep.userId,
       `✅ ငွေ ${dep.amount.toLocaleString()} ကျပ် Add Gold အတည်ပြုပြီး! 💵`,
-      Markup.inlineKeyboard([[Markup.button.webApp('💵 Play Now', FRONTEND_URL)]])).catch(() => {});
+      Markup.inlineKeyboard([[Markup.button.webApp('💵 ကစားမည် — Cash Hunter', FRONTEND_URL)]])).catch(() => {});
     res.json({ success: true });
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
