@@ -1210,6 +1210,7 @@ app.post('/api/agent/deposits/:id/confirm', isAgent, async (req, res) => {
 
     if (dep.amount >= 3000) {
       const prevConfirmed = await Deposit.countDocuments({ userId: dep.userId, status: 'confirmed', _id: { $ne: dep._id } });
+      if (prevConfirmed === 0) {
         await User.findOneAndUpdate({ telegramId: agentId }, { $inc: { balance: 200 } });
         if (bot) bot.telegram.sendMessage(agentId,
           `🎉 Referral မှ ပထမဆုံး ငွေဖြည့်သောကြောင့် <b>+200 MMK</b> Bonus ရရှိပါပြီ!`,
